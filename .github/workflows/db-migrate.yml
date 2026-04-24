@@ -30,7 +30,7 @@ jobs:
     environment: production
     timeout-minutes: 10
     concurrency:
-      group: db-migrate-production
+      group: db-migrate
       cancel-in-progress: false
 
     steps:
@@ -49,4 +49,4 @@ jobs:
       - name: Apply Drizzle migrations
         env:
           DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-        run: npx drizzle-kit migrate
+        run: npm run db:migrate
