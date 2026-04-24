@@ -2,6 +2,7 @@ import { Box, Button, Flex, HStack, Heading, Stack, Text } from '@chakra-ui/reac
 import { AddTaskButton } from '@/components/add-task-button';
 import { TaskActionsProvider } from '@/components/task-actions-provider';
 import { TaskTree } from '@/components/task-tree';
+import { ViewToggle } from '@/components/view-toggle';
 import { getTaskTree } from '@/lib/tasks/queries';
 
 // 목록은 항상 현재 DB 상태를 읽는다 — 빌드 타임 prerender 금지.
@@ -17,20 +18,7 @@ export default async function HomePage() {
           <Flex align="center" justify="space-between" wrap="wrap" gap={4}>
             <HStack gap={4}>
               <Heading size="lg">WBS</Heading>
-              <HStack
-                gap={0}
-                borderWidth="1px"
-                borderColor="gray.200"
-                borderRadius="md"
-                overflow="hidden"
-              >
-                <Button size="sm" variant="solid" colorPalette="blue" borderRadius={0}>
-                  목록
-                </Button>
-                <Button size="sm" variant="ghost" borderRadius={0} aria-disabled>
-                  간트
-                </Button>
-              </HStack>
+              <ViewToggle active="list" />
             </HStack>
 
             <HStack gap={2}>
