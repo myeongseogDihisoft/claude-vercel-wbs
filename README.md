@@ -291,6 +291,8 @@ Supabase Cloud 프로젝트 생성
 
 이 저장소에는 이미 `.github/workflows/db-migrate.yml` 이 들어 있습니다. `main` 브랜치에 push되면 Drizzle 마이그레이션이 자동으로 원격 Supabase DB에 적용됩니다.
 
+> ℹ️ 이 워크플로우는 `drizzle/**`, `lib/db/schema.ts`, `drizzle.config.ts`, `package.json`, `package-lock.json`, `.github/workflows/db-migrate.yml` 가 변경된 push에만 실행됩니다. README나 앱 코드만 고쳐서 main에 올려도 마이그레이션 잡은 돌지 않는 것이 정상입니다. 수동으로 돌리고 싶다면 Actions 탭에서 `DB Migrate (Production)` → **Run workflow** 버튼을 쓰면 됩니다.
+
 **사전 준비 (GitHub 저장소 UI에서)**:
 
 1. GitHub 저장소 페이지 → **Settings → Environments → New environment** → 이름 `production`.
