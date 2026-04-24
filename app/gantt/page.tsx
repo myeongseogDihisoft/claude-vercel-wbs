@@ -1,12 +1,12 @@
 import { Box, Button, Flex, HStack, Heading, Stack, Text } from '@chakra-ui/react';
-import { TaskTree } from '@/components/task-tree';
+import { GanttView } from '@/components/gantt-view';
 import { ViewToggle } from '@/components/view-toggle';
 import { getTaskTree } from '@/lib/tasks/queries';
 
-// 목록은 항상 현재 DB 상태를 읽는다 — 빌드 타임 prerender 금지.
+// 오늘 세로선을 렌더하므로 빌드 타임 prerender 금지.
 export const dynamic = 'force-dynamic';
 
-export default async function HomePage() {
+export default async function GanttPage() {
   const tasks = await getTaskTree();
 
   return (
@@ -15,11 +15,11 @@ export default async function HomePage() {
         <Flex align="center" justify="space-between" wrap="wrap" gap={4}>
           <HStack gap={4}>
             <Heading size="lg">WBS</Heading>
-            <ViewToggle active="list" />
+            <ViewToggle active="gantt" />
           </HStack>
 
           <HStack gap={2}>
-            <Button size="sm" colorPalette="blue">
+            <Button size="sm" colorPalette="blue" aria-disabled>
               + 작업 추가
             </Button>
             <Button size="sm" variant="outline" aria-disabled>
@@ -34,10 +34,9 @@ export default async function HomePage() {
         {tasks.length === 0 ? (
           <Stack align="center" gap={3} py={16}>
             <Text color="gray.600">아직 작업이 없습니다. 첫 작업을 추가해 시작하세요</Text>
-            <Button colorPalette="blue">+ 작업 추가</Button>
           </Stack>
         ) : (
-          <TaskTree tasks={tasks} />
+          <GanttView tasks={tasks} />
         )}
       </Stack>
     </Box>
