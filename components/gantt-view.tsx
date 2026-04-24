@@ -1,5 +1,6 @@
 import { Box, Flex, Text } from '@chakra-ui/react';
 import type { TaskNode } from '@/lib/tasks/queries';
+import { isOverdue } from '@/lib/tasks/overdue';
 import { GanttBar } from './gantt-bar';
 
 type Props = {
@@ -183,6 +184,7 @@ export function GanttView({ tasks }: Props) {
                     progress={node.progress}
                     timelineStart={timelineStart}
                     timelineEnd={timelineEnd}
+                    isOverdue={isOverdue(node.dueDate, node.status)}
                   />
                 ) : (
                   <Flex position="absolute" inset={0} align="center" pl={3}>

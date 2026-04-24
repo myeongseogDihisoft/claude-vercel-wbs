@@ -6,6 +6,7 @@ type Props = {
   progress: number;
   timelineStart: Date;
   timelineEnd: Date;
+  isOverdue?: boolean;
 };
 
 function clampPercent(value: number): number {
@@ -15,7 +16,7 @@ function clampPercent(value: number): number {
   return value;
 }
 
-export function GanttBar({ start, end, progress, timelineStart, timelineEnd }: Props) {
+export function GanttBar({ start, end, progress, timelineStart, timelineEnd, isOverdue = false }: Props) {
   const totalMs = timelineEnd.getTime() - timelineStart.getTime();
   if (totalMs <= 0) return null;
 
@@ -40,6 +41,7 @@ export function GanttBar({ start, end, progress, timelineStart, timelineEnd }: P
       overflow="hidden"
       userSelect="none"
       aria-label="간트 막대"
+      {...(isOverdue && { outline: '2px solid', outlineColor: 'red.500' })}
     >
       <Box width={`${fill}%`} height="100%" bg="blue.500" />
     </Box>

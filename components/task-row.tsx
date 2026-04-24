@@ -2,6 +2,8 @@
 
 import { Box, Flex, IconButton, Menu, Portal, Progress, Text } from '@chakra-ui/react';
 import type { TaskNode } from '@/lib/tasks/queries';
+import { isOverdue } from '@/lib/tasks/overdue';
+import { OverdueIndicator } from './overdue-indicator';
 import { StatusBadge } from './status-badge';
 import { useTaskActions } from './task-actions-provider';
 
@@ -86,12 +88,20 @@ export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props)
       </Flex>
 
       <Box width="9rem" flexShrink={0}>
-        <Text
-          fontSize="sm"
-          color={task.startDate || task.dueDate ? undefined : 'gray.500'}
-        >
-          {formatDateRange(task.startDate, task.dueDate)}
-        </Text>
+        {(() => {
+          const overdue = isOverdue(task.dueDate, task.status);
+          return (
+            <Flex align="center" gap={1} wrap="wrap">
+              <Text
+                fontSize="sm"
+                color={overdue ? 'red.500' : task.startDate || task.dueDate ? undefined : 'gray.500'}
+              >
+                {formatDateRange(task.startDate, task.dueDate)}
+              </Text>
+              {overdue && <OverdueIndicator />}
+            </Flex>
+          );
+        })()}
       </Box>
 
       <Box flexShrink={0}>
