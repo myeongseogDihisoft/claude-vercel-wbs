@@ -1,7 +1,7 @@
 'use client';
 
 import { Box } from '@chakra-ui/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { TaskNode } from '@/lib/tasks/queries';
 import { TaskRow } from './task-row';
 
@@ -38,6 +38,16 @@ function collectIdsWithChildren(nodes: TaskNode[], acc: Set<string> = new Set())
 
 export function TaskTree({ tasks }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(() => collectIdsWithChildren(tasks));
+
+  // 작업이 새로 자식을 갖게 되면(예: 5.0 하위 작업 추가 직후) 자동으로 펼친다.
+  // 사용자가 명시적으로 접은 노드는 그대로 둔다.
+  useEffect(() => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      for (const id of collectIdsWithChildren(tasks)) next.add(id);
+      return next;
+    });
+  }, [tasks]);
 
   const toggle = (id: string) => {
     setExpanded((prev) => {

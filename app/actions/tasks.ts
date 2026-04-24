@@ -1,8 +1,9 @@
 'use server';
 
-// Task CRUD Server Action 시그니처 스텁.
-// 실제 DB 쿼리 본체는 에픽 5(5.1/5.2/5.2.1/5.3)에서 채운다.
-// 변경 성공 후에는 각 action 마지막에 revalidatePath('/') 를 호출해 목록 뷰를 갱신한다.
+import { eq } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
+import { db } from '@/lib/db';
+import { tasks } from '@/lib/db/schema';
 
 export type CreateTaskInput = {
   title: string;
@@ -24,23 +25,55 @@ export type UpdateTaskPatch = Partial<{
   parentId: string | null;
 }>;
 
-export async function createTask(_input: CreateTaskInput): Promise<void> {
-  // TODO(5.1): insert into tasks, revalidatePath('/')
-  throw new Error('createTask: not implemented (will be filled in issue 5.1)');
+function emptyToNull<T extends string | null | undefined>(v: T): string | null {
+  if (v === undefined || v === null) return null;
+  const trimmed = v.trim();
+  return trimmed.length === 0 ? null : trimmed;
 }
 
-export async function updateTask(_id: string, _patch: UpdateTaskPatch): Promise<void> {
-  // TODO(5.2): update tasks set ... where id = ?, revalidatePath('/')
-  // progress 100 → status 'done' 자동 동기화 규칙(SPEC.md §3)은 여기서 적용.
-  throw new Error('updateTask: not implemented (will be filled in issue 5.2)');
+export async function createTask(input: CreateTaskInput): Promise<void> {
+  const title = input.title.trim();
+  if (!title) throw new Error('title is required');
+
+  await db.insert(tasks).values({
+    title,
+    parentId: emptyToNull(input.parentId ?? null),
+    description: emptyToNull(input.description),
+    assignee: emptyToNull(input.assignee),
+    startDate: emptyToNull(input.startDate),
+    dueDate: emptyToNull(input.dueDate),
+  });
+
+  revalidatePath('/');
 }
 
-export async function deleteTask(_id: string): Promise<void> {
-  // TODO(5.3): delete from tasks where id = ? (cascade로 자식도 삭제), revalidatePath('/')
-  throw new Error('deleteTask: not implemented (will be filled in issue 5.3)');
+export async function updateTask(id: string, patch: UpdateTaskPatch): Promise<void> {
+  // SPEC §3-2: 진행률 100 → 상태 자동 'done' (편의). 역방향(상태 → 진행률) 자동 동기화는 없다.
+  const next: Record<string, unknown> = { ...patch, updatedAt: new Date() };
+
+  if (patch.progress === 100) {
+    next.status = 'done';
+  }
+
+  if ('parentId' in patch) {
+    next.parentId = emptyToNull(patch.parentId ?? null);
+  }
+  if ('description' in patch) next.description = emptyToNull(patch.description);
+  if ('assignee' in patch) next.assignee = emptyToNull(patch.assignee);
+  if ('startDate' in patch) next.startDate = emptyToNull(patch.startDate);
+  if ('dueDate' in patch) next.dueDate = emptyToNull(patch.dueDate);
+  if (patch.title !== undefined) {
+    const t = patch.title.trim();
+    if (!t) throw new Error('title cannot be empty');
+    next.title = t;
+  }
+
+  await db.update(tasks).set(next).where(eq(tasks.id, id));
+  revalidatePath('/');
 }
 
-export async function cycleStatus(_id: string): Promise<void> {
-  // TODO(5.2.1): todo → doing → done → todo 순회, revalidatePath('/')
-  throw new Error('cycleStatus: not implemented (will be filled in issue 5.2.1)');
+export async function deleteTask(id: string): Promise<void> {
+  // FK ON DELETE CASCADE 가 자식 레코드까지 함께 제거한다 (lib/db/schema.ts).
+  await db.delete(tasks).where(eq(tasks.id, id));
+  revalidatePath('/');
 }

@@ -1,5 +1,9 @@
-import { Badge, Box, Flex, IconButton, Progress, Text } from '@chakra-ui/react';
+'use client';
+
+import { Box, Flex, IconButton, Menu, Portal, Progress, Text } from '@chakra-ui/react';
 import type { TaskNode } from '@/lib/tasks/queries';
+import { StatusBadge } from './status-badge';
+import { useTaskActions } from './task-actions-provider';
 
 type Props = {
   task: TaskNode;
@@ -7,18 +11,6 @@ type Props = {
   hasChildren: boolean;
   expanded: boolean;
   onToggle: () => void;
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  todo: '할 일',
-  doing: '진행 중',
-  done: '완료',
-};
-
-const STATUS_PALETTE: Record<string, string> = {
-  todo: 'gray',
-  doing: 'blue',
-  done: 'green',
 };
 
 function formatDate(iso: string): string {
@@ -35,7 +27,7 @@ function formatDateRange(start: string | null, due: string | null): string {
 }
 
 export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props) {
-  const statusKey = STATUS_LABEL[task.status] ? task.status : 'todo';
+  const { openCreateChild, openEdit, openDelete } = useTaskActions();
 
   return (
     <Flex
@@ -46,6 +38,8 @@ export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props)
       borderBottomWidth="1px"
       borderColor="gray.200"
       _hover={{ bg: 'gray.50' }}
+      cursor="pointer"
+      onClick={() => openEdit(task)}
     >
       <Box width="1.75rem" display="flex" justifyContent="center" flexShrink={0}>
         {hasChildren ? (
@@ -54,7 +48,10 @@ export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props)
             aria-expanded={expanded}
             size="2xs"
             variant="ghost"
-            onClick={onToggle}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle();
+            }}
           >
             {expanded ? '▼' : '▶'}
           </IconButton>
@@ -74,7 +71,7 @@ export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props)
       </Box>
 
       <Box width="5rem" flexShrink={0}>
-        <Badge colorPalette={STATUS_PALETTE[statusKey]}>{STATUS_LABEL[statusKey]}</Badge>
+        <StatusBadge taskId={task.id} status={task.status} />
       </Box>
 
       <Flex width="8rem" flexShrink={0} align="center" gap={2}>
@@ -95,6 +92,38 @@ export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props)
         >
           {formatDateRange(task.startDate, task.dueDate)}
         </Text>
+      </Box>
+
+      <Box flexShrink={0}>
+        <Menu.Root
+          positioning={{ placement: 'bottom-end' }}
+          onSelect={(d) => {
+            if (d.value === 'edit') openEdit(task);
+            else if (d.value === 'add-child') openCreateChild(task);
+            else if (d.value === 'delete') openDelete(task);
+          }}
+        >
+          <Menu.Trigger asChild onClick={(e) => e.stopPropagation()}>
+            <IconButton
+              aria-label="작업 메뉴"
+              size="xs"
+              variant="ghost"
+            >
+              ⋯
+            </IconButton>
+          </Menu.Trigger>
+          <Portal>
+            <Menu.Positioner>
+              <Menu.Content onClick={(e) => e.stopPropagation()}>
+                <Menu.Item value="edit">수정</Menu.Item>
+                <Menu.Item value="add-child">하위 작업 추가</Menu.Item>
+                <Menu.Item value="delete" color="red.600">
+                  삭제
+                </Menu.Item>
+              </Menu.Content>
+            </Menu.Positioner>
+          </Portal>
+        </Menu.Root>
       </Box>
     </Flex>
   );
