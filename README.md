@@ -1,5 +1,7 @@
 # Claude Code × Vercel WBS 과제
 
+🚀 **배포 URL**: <https://claude-vercel-wbs-sage.vercel.app>
+
 Claude Code만으로 WBS(Work Breakdown Structure) 프로젝트 매니지먼트 웹앱을 만들고, Vercel에 배포해 공개 URL을 획득해보는 풀스택 과제입니다. 직접 타이핑은 최소한으로만 하고, 대부분의 구현은 Claude Code에게 지시해서 진행합니다.
 
 ## 관련 문서
