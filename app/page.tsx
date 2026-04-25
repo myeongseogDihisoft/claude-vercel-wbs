@@ -1,5 +1,7 @@
-import { Box, Button, Flex, HStack, Heading, Stack, Text } from '@chakra-ui/react';
+import { Box, Flex, HStack, Heading, Stack, Text } from '@chakra-ui/react';
 import { AddTaskButton } from '@/components/add-task-button';
+import { CsvExportButton } from '@/components/csv-export-button';
+import { CsvImportDialog } from '@/components/csv-import-dialog';
 import { TaskActionsProvider } from '@/components/task-actions-provider';
 import { TaskTree } from '@/components/task-tree';
 import { ViewToggle } from '@/components/view-toggle';
@@ -23,12 +25,8 @@ export default async function HomePage() {
 
             <HStack gap={2}>
               <AddTaskButton size="sm" />
-              <Button size="sm" variant="outline" aria-disabled>
-                CSV 내보내기
-              </Button>
-              <Button size="sm" variant="outline" aria-disabled>
-                CSV 불러오기
-              </Button>
+              <CsvExportButton />
+              <CsvImportDialog />
             </HStack>
           </Flex>
 
