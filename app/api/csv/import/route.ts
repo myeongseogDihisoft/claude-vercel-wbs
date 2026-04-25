@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import { tasks } from '@/lib/db/schema';
 import { parseCsv, type ImportWarning } from '@/lib/csv/import';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const action = formData.get('action') as string;
