@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, CloseButton, Dialog, Portal, Text } from '@chakra-ui/react';
-import { useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 
 type Props = {
   open: boolean;
@@ -23,13 +23,29 @@ export function ConfirmDialog({
   onClose,
 }: Props) {
   const [pending, startTransition] = useTransition();
+  // close 를 transition 외부에서 수행해 Chakra Dialog cleanup 과 RSC 커밋의 경합을 막는다 (#43).
+  const submittingRef = useRef(false);
+  const [confirmError, setConfirmError] = useState(false);
 
   const handleConfirm = () => {
+    setConfirmError(false);
+    submittingRef.current = true;
     startTransition(async () => {
-      await onConfirm();
-      onClose();
+      try {
+        await onConfirm();
+      } catch {
+        setConfirmError(true);
+      }
     });
   };
+
+  useEffect(() => {
+    if (pending) return;
+    if (!submittingRef.current) return;
+    submittingRef.current = false;
+    if (confirmError) return;
+    onClose();
+  }, [pending, confirmError, onClose]);
 
   return (
     <Dialog.Root

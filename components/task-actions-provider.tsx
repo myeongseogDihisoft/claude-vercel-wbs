@@ -35,6 +35,7 @@ export function TaskActionsProvider({ children }: { children: ReactNode }) {
   const [modalMode, setModalMode] = useState<TaskModalMode | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteState, setDeleteState] = useState<DeleteState>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const openCreateRoot = useCallback(() => {
     setModalMode({ kind: 'create' });
@@ -53,6 +54,7 @@ export function TaskActionsProvider({ children }: { children: ReactNode }) {
 
   const openDelete = useCallback((task: TaskNode) => {
     setDeleteState({ task, descendants: countDescendants(task) });
+    setDeleteOpen(true);
   }, []);
 
   const value = useMemo<Ctx>(
@@ -60,8 +62,17 @@ export function TaskActionsProvider({ children }: { children: ReactNode }) {
     [openCreateRoot, openCreateChild, openEdit, openDelete],
   );
 
-  const closeModal = () => setModalOpen(false);
-  const closeDelete = () => setDeleteState(null);
+  // close 후 mode/state 클리어를 Dialog 의 close 애니메이션이 끝난 뒤로 미룬다.
+  // 즉시 클리어하면 Chakra Dialog 가 언마운트 도중 stale mode 를 다시 그리려 시도해
+  // inert/aria-hidden 정리가 어긋나는 경우가 있다 (#43).
+  const closeModal = useCallback(() => {
+    setModalOpen(false);
+    window.setTimeout(() => setModalMode(null), 300);
+  }, []);
+  const closeDelete = useCallback(() => {
+    setDeleteOpen(false);
+    window.setTimeout(() => setDeleteState(null), 300);
+  }, []);
 
   const deleteBody = deleteState
     ? deleteState.descendants > 0
@@ -74,7 +85,7 @@ export function TaskActionsProvider({ children }: { children: ReactNode }) {
       {children}
       <TaskModal open={modalOpen} mode={modalMode} onClose={closeModal} />
       <ConfirmDialog
-        open={!!deleteState}
+        open={deleteOpen}
         title="작업 삭제"
         body={deleteBody}
         confirmLabel="삭제"

@@ -12,7 +12,7 @@ import {
   Stack,
   Textarea,
 } from '@chakra-ui/react';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { createTask, updateTask, type UpdateTaskPatch } from '@/app/actions/tasks';
 import type { Task } from '@/lib/tasks/queries';
 
@@ -79,6 +79,10 @@ export function TaskModal({ open, mode, onClose }: Props) {
   const [errors, setErrors] = useState<Errors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // submit() 가 트랜지션을 시작했음을 표시. close 는 transition 외부 effect 에서 수행한다.
+  // 같은 transition 안에서 onClose() 를 부르면 Chakra Dialog 의 inert/aria-hidden 정리가
+  // RSC 커밋과 경합해 메인 영역이 클릭 불가 상태로 남는 버그가 발생한다 (#43).
+  const submittingRef = useRef(false);
 
   // 모드 변경 시 폼 초기화 (모달 열릴 때).
   useEffect(() => {
@@ -87,6 +91,15 @@ export function TaskModal({ open, mode, onClose }: Props) {
     setSubmitError(null);
     setForm(mode.kind === 'edit' ? fromTask(mode.task) : EMPTY);
   }, [open, mode]);
+
+  // 트랜지션 종료 후 (성공) 모달 close. transition 외부에서 호출되어 RSC 커밋과 경합하지 않는다.
+  useEffect(() => {
+    if (pending) return;
+    if (!submittingRef.current) return;
+    submittingRef.current = false;
+    if (submitError) return;
+    onClose();
+  }, [pending, submitError, onClose]);
 
   if (!mode) return null;
 
@@ -102,6 +115,8 @@ export function TaskModal({ open, mode, onClose }: Props) {
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
+    setSubmitError(null);
+    submittingRef.current = true;
     startTransition(async () => {
       try {
         if (mode.kind === 'create') {
@@ -125,7 +140,6 @@ export function TaskModal({ open, mode, onClose }: Props) {
           };
           await updateTask(mode.task.id, patch);
         }
-        onClose();
       } catch (e) {
         setSubmitError(e instanceof Error ? e.message : '저장 중 오류가 발생했습니다');
       }
