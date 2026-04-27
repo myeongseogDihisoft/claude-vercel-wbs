@@ -1,13 +1,13 @@
 'use client';
 
-import { useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { Box, Flex, Text } from '@chakra-ui/react';
 import type { TaskNode } from '@/lib/tasks/queries';
 import { isOverdue } from '@/lib/tasks/overdue';
 import { GanttBar } from './gantt-bar';
 
 const LEFT_PANE_PX = 352; // 22rem
-const WEEK_PX = 96; // 6rem
+const MIN_WEEK_PX = 96; // 6rem 기본 폭, 데이터가 많아 트랙이 컨테이너를 넘으면 이 값 유지
 
 type Props = {
   tasks: TaskNode[];
@@ -94,13 +94,28 @@ export function GanttView({ tasks }: Props) {
 
   const LEFT_PANE_WIDTH = '22rem';
   const ROW_HEIGHT = '2rem';
-  const WEEK_WIDTH = '6rem';
-  const trackWidth = `calc(${WEEK_WIDTH} * ${weekCols.length})`;
-  const trackPxWidth = weekCols.length * WEEK_PX;
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [hoverInfo, setHoverInfo] = useState<{ x: number; label: string } | null>(null);
+  const [containerPx, setContainerPx] = useState(0);
+
+  useEffect(() => {
+    const update = () => setContainerPx(scrollRef.current?.clientWidth ?? 0);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  // 데이터 양이 적어 기본 폭으로 채워지지 않으면 컨테이너에 맞춰 주 컬럼 폭을 늘린다.
+  const targetTrackPx = Math.max(0, containerPx - LEFT_PANE_PX);
+  const dynamicWeekPx =
+    weekCols.length > 0
+      ? Math.max(MIN_WEEK_PX, targetTrackPx / weekCols.length)
+      : MIN_WEEK_PX;
+  const WEEK_WIDTH = `${dynamicWeekPx}px`;
+  const trackPxWidth = weekCols.length * dynamicWeekPx;
+  const trackWidth = `${trackPxWidth}px`;
 
   const scrollToStartDate = (startISO: string | null) => {
     if (!startISO || !scrollRef.current) return;
@@ -314,7 +329,7 @@ export function GanttView({ tasks }: Props) {
             <Text
               position="absolute"
               top="2px"
-              left="4px"
+              {...(todayLeft <= 92 ? { left: '4px' } : { right: '4px' })}
               fontSize="2xs"
               fontWeight="semibold"
               color="gray.600"
