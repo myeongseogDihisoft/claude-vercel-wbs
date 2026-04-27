@@ -3,9 +3,6 @@ import type { TaskNode } from '@/lib/tasks/queries';
 import { isOverdue } from '@/lib/tasks/overdue';
 import { GanttBar } from './gantt-bar';
 
-const OVERDUE_STRIPES =
-  'repeating-linear-gradient(45deg, transparent 0, transparent 6px, rgba(239,68,68,0.1) 6px, rgba(239,68,68,0.1) 10px)';
-
 type Props = {
   tasks: TaskNode[];
 };
@@ -114,23 +111,38 @@ export function GanttView({ tasks }: Props) {
             <Box flex="1">작업</Box>
             <Box width="3rem" textAlign="right">진행률</Box>
           </Flex>
-          {rows.map(({ node, depth }) => (
-            <Flex
-              key={node.id}
-              height={ROW_HEIGHT}
-              align="center"
-              px={3}
-              borderBottomWidth="1px"
-              borderColor="gray.100"
-            >
-              <Box flex="1" pl={`${depth * 1.25}rem`} minW={0}>
-                <Text truncate fontSize="sm">{node.title}</Text>
-              </Box>
-              <Box width="3rem" textAlign="right">
-                <Text fontSize="sm" color="gray.600">{node.progress}%</Text>
-              </Box>
-            </Flex>
-          ))}
+          {rows.map(({ node, depth }) => {
+            const overdue = isOverdue(node.dueDate, node.status);
+            return (
+              <Flex
+                key={node.id}
+                position="relative"
+                height={ROW_HEIGHT}
+                align="center"
+                px={3}
+                borderBottomWidth="1px"
+                borderColor="gray.100"
+              >
+                {overdue && (
+                  <Box
+                    position="absolute"
+                    left={0}
+                    top={0}
+                    bottom={0}
+                    width="3px"
+                    bg="red.500"
+                    aria-label="지남"
+                  />
+                )}
+                <Box flex="1" pl={`${depth * 1.25}rem`} minW={0}>
+                  <Text truncate fontSize="sm">{node.title}</Text>
+                </Box>
+                <Box width="3rem" textAlign="right">
+                  <Text fontSize="sm" color="gray.600">{node.progress}%</Text>
+                </Box>
+              </Flex>
+            );
+          })}
         </Box>
 
         <Box position="relative" flex="1" minWidth={trackWidth}>
@@ -203,26 +215,6 @@ export function GanttView({ tasks }: Props) {
                 borderBottomWidth="1px"
                 borderColor="gray.100"
               >
-                {overdue && (
-                  <>
-                    <Box
-                      position="absolute"
-                      left={0}
-                      top={0}
-                      bottom={0}
-                      width="3px"
-                      bg="red.500"
-                      zIndex={1}
-                      aria-label="지남"
-                    />
-                    <Box
-                      position="absolute"
-                      inset={0}
-                      pointerEvents="none"
-                      bgImage={OVERDUE_STRIPES}
-                    />
-                  </>
-                )}
                 {weekCols.map((col, i) => (
                   <Box
                     key={col.toISOString()}
@@ -244,6 +236,7 @@ export function GanttView({ tasks }: Props) {
                     timelineStart={timelineStart}
                     timelineEnd={timelineEnd}
                     status={node.status}
+                    isOverdue={overdue}
                   />
                 ) : (
                   <Flex position="absolute" inset={0} align="center" pl={3}>

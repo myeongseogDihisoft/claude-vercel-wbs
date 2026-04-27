@@ -7,6 +7,7 @@ type Props = {
   timelineStart: Date;
   timelineEnd: Date;
   status: string;
+  isOverdue?: boolean;
 };
 
 const TRACK_BG: Record<string, string> = {
@@ -30,7 +31,15 @@ function clampPercent(value: number): number {
   return value;
 }
 
-export function GanttBar({ start, end, progress, timelineStart, timelineEnd, status }: Props) {
+export function GanttBar({
+  start,
+  end,
+  progress,
+  timelineStart,
+  timelineEnd,
+  status,
+  isOverdue = false,
+}: Props) {
   const totalMs = timelineEnd.getTime() - timelineStart.getTime();
   if (totalMs <= 0) return null;
 
@@ -41,8 +50,8 @@ export function GanttBar({ start, end, progress, timelineStart, timelineEnd, sta
   const width = clampPercent(((endMs - startMs) / totalMs) * 100);
   const fill = clampPercent(progress);
 
-  const trackBg = TRACK_BG[status] ?? 'blue.100';
-  const fillBg = FILL_BG[status] ?? 'blue.500';
+  const trackBg = isOverdue ? 'red.100' : TRACK_BG[status] ?? 'blue.100';
+  const fillBg = isOverdue ? 'red.500' : FILL_BG[status] ?? 'blue.500';
 
   return (
     <Box
@@ -58,6 +67,7 @@ export function GanttBar({ start, end, progress, timelineStart, timelineEnd, sta
       overflow="hidden"
       userSelect="none"
       aria-label="간트 막대"
+      {...(isOverdue && { borderWidth: '1px', borderColor: 'red.500' })}
     >
       <Box width={`${fill}%`} height="100%" bg={fillBg} />
     </Box>
