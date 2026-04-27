@@ -31,6 +31,10 @@ function clampPercent(value: number): number {
   return value;
 }
 
+function formatMD(d: Date): string {
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
 export function GanttBar({
   start,
   end,
@@ -53,6 +57,8 @@ export function GanttBar({
   const trackBg = isOverdue ? 'red.100' : TRACK_BG[status] ?? 'blue.100';
   const fillBg = isOverdue ? 'red.500' : FILL_BG[status] ?? 'blue.500';
 
+  const dateLabel = `${formatMD(start)} ~ ${formatMD(end)} · ${fill}%`;
+
   return (
     <Box
       position="absolute"
@@ -66,7 +72,8 @@ export function GanttBar({
       borderRadius="sm"
       overflow="hidden"
       userSelect="none"
-      aria-label="간트 막대"
+      aria-label={`간트 막대 ${dateLabel}`}
+      title={dateLabel}
       {...(isOverdue && { borderWidth: '1px', borderColor: 'red.500' })}
     >
       <Box width={`${fill}%`} height="100%" bg={fillBg} />

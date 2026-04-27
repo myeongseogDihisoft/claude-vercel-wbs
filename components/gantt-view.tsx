@@ -252,13 +252,29 @@ export function GanttView({ tasks }: Props) {
             top={0}
             bottom={0}
             left={`${todayLeft}%`}
-            width="0"
-            borderLeftWidth="1px"
-            borderLeftStyle="dashed"
-            borderLeftColor="gray.400"
+            width="2px"
+            bg="blue.500"
             pointerEvents="none"
+            zIndex={2}
             aria-label="오늘"
-          />
+          >
+            <Box
+              position="absolute"
+              top="2px"
+              left="4px"
+              px="1.5"
+              py="0.5"
+              bg="blue.500"
+              color="white"
+              fontSize="2xs"
+              fontWeight="semibold"
+              borderRadius="sm"
+              whiteSpace="nowrap"
+              lineHeight="1"
+            >
+              오늘 {today.getMonth() + 1}/{today.getDate()}
+            </Box>
+          </Box>
         </Box>
       </Flex>
     </Box>
