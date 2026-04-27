@@ -41,7 +41,7 @@ export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props)
       position="relative"
       borderBottomWidth="1px"
       borderColor="gray.200"
-      _hover={{ bg: 'gray.100' }}
+      _hover={{ bg: 'gray.100', boxShadow: 'inset 3px 0 0 var(--chakra-colors-blue-500)' }}
       cursor="pointer"
       onClick={() => openEdit(task)}
     >

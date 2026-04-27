@@ -7,7 +7,6 @@ type Props = {
   timelineStart: Date;
   timelineEnd: Date;
   status: string;
-  isOverdue?: boolean;
 };
 
 const TRACK_BG: Record<string, string> = {
@@ -35,15 +34,7 @@ function formatMD(d: Date): string {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
-export function GanttBar({
-  start,
-  end,
-  progress,
-  timelineStart,
-  timelineEnd,
-  status,
-  isOverdue = false,
-}: Props) {
+export function GanttBar({ start, end, progress, timelineStart, timelineEnd, status }: Props) {
   const totalMs = timelineEnd.getTime() - timelineStart.getTime();
   if (totalMs <= 0) return null;
 
@@ -54,9 +45,8 @@ export function GanttBar({
   const width = clampPercent(((endMs - startMs) / totalMs) * 100);
   const fill = clampPercent(progress);
 
-  const trackBg = isOverdue ? 'red.100' : TRACK_BG[status] ?? 'blue.100';
-  const fillBg = isOverdue ? 'red.500' : FILL_BG[status] ?? 'blue.500';
-
+  const trackBg = TRACK_BG[status] ?? 'blue.100';
+  const fillBg = FILL_BG[status] ?? 'blue.500';
   const dateLabel = `${formatMD(start)} ~ ${formatMD(end)} · ${fill}%`;
 
   return (
@@ -74,7 +64,6 @@ export function GanttBar({
       userSelect="none"
       aria-label={`간트 막대 ${dateLabel}`}
       title={dateLabel}
-      {...(isOverdue && { borderWidth: '1px', borderColor: 'red.500' })}
     >
       <Box width={`${fill}%`} height="100%" bg={fillBg} />
     </Box>
