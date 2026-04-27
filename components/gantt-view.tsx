@@ -1,7 +1,13 @@
+'use client';
+
+import { useRef, useState, type MouseEvent } from 'react';
 import { Box, Flex, Text } from '@chakra-ui/react';
 import type { TaskNode } from '@/lib/tasks/queries';
 import { isOverdue } from '@/lib/tasks/overdue';
 import { GanttBar } from './gantt-bar';
+
+const LEFT_PANE_PX = 352; // 22rem
+const WEEK_PX = 96; // 6rem
 
 type Props = {
   tasks: TaskNode[];
@@ -90,9 +96,35 @@ export function GanttView({ tasks }: Props) {
   const ROW_HEIGHT = '2rem';
   const WEEK_WIDTH = '6rem';
   const trackWidth = `calc(${WEEK_WIDTH} * ${weekCols.length})`;
+  const trackPxWidth = weekCols.length * WEEK_PX;
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [hoverInfo, setHoverInfo] = useState<{ x: number; label: string } | null>(null);
+
+  const scrollToStartDate = (startISO: string | null) => {
+    if (!startISO || !scrollRef.current) return;
+    const start = parseLocalDate(startISO);
+    const offsetPx = ((start.getTime() - timelineStart.getTime()) / totalMs) * trackPxWidth;
+    scrollRef.current.scrollLeft = Math.max(0, LEFT_PANE_PX + offsetPx - 16);
+  };
+
+  const handleTrackHover = (e: MouseEvent<HTMLDivElement>) => {
+    if (!trackRef.current) return;
+    const rect = trackRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    if (x < 0 || x > trackPxWidth) {
+      setHoverInfo(null);
+      return;
+    }
+    const ratio = x / trackPxWidth;
+    const ms = timelineStart.getTime() + ratio * totalMs;
+    const d = new Date(ms);
+    setHoverInfo({ x, label: formatMonthDay(d) });
+  };
 
   return (
-    <Box borderWidth="1px" borderColor="gray.200" borderRadius="md" overflowX="auto">
+    <Box ref={scrollRef} borderWidth="1px" borderColor="gray.200" borderRadius="md" overflowX="auto">
       <Flex
         align="stretch"
         minWidth={`calc(${LEFT_PANE_WIDTH} + ${trackWidth})`}
@@ -122,6 +154,9 @@ export function GanttView({ tasks }: Props) {
                 px={3}
                 borderBottomWidth="1px"
                 borderColor="gray.100"
+                cursor={node.startDate ? 'pointer' : 'default'}
+                _hover={node.startDate ? { bg: 'gray.50' } : undefined}
+                onClick={() => scrollToStartDate(node.startDate)}
               >
                 {overdue && (
                   <Box
@@ -145,7 +180,14 @@ export function GanttView({ tasks }: Props) {
           })}
         </Box>
 
-        <Box position="relative" flex="1" minWidth={trackWidth}>
+        <Box
+          ref={trackRef}
+          position="relative"
+          flex="1"
+          minWidth={trackWidth}
+          onMouseMove={handleTrackHover}
+          onMouseLeave={() => setHoverInfo(null)}
+        >
           <Flex
             height={ROW_HEIGHT}
             bg="gray.50"
@@ -214,6 +256,8 @@ export function GanttView({ tasks }: Props) {
                 height={ROW_HEIGHT}
                 borderBottomWidth="1px"
                 borderColor="gray.100"
+                cursor={node.startDate ? 'pointer' : 'default'}
+                onClick={() => scrollToStartDate(node.startDate)}
               >
                 {overdue && (
                   <Box
@@ -244,6 +288,7 @@ export function GanttView({ tasks }: Props) {
                     timelineStart={timelineStart}
                     timelineEnd={timelineEnd}
                     status={node.status}
+                    isOverdue={overdue}
                   />
                 ) : (
                   <Flex position="absolute" inset={0} align="center" pl={3}>
@@ -265,7 +310,52 @@ export function GanttView({ tasks }: Props) {
             borderLeftColor="gray.400"
             pointerEvents="none"
             aria-label="오늘"
-          />
+          >
+            <Text
+              position="absolute"
+              top="2px"
+              left="4px"
+              fontSize="2xs"
+              fontWeight="semibold"
+              color="gray.600"
+              whiteSpace="nowrap"
+              lineHeight="1"
+            >
+              오늘 {today.getMonth() + 1}/{today.getDate()}
+            </Text>
+          </Box>
+
+          {hoverInfo && (
+            <Box
+              position="absolute"
+              top={0}
+              bottom={0}
+              left={`${hoverInfo.x}px`}
+              width="0"
+              borderLeftWidth="1px"
+              borderLeftStyle="dotted"
+              borderLeftColor="gray.300"
+              pointerEvents="none"
+              zIndex={3}
+            >
+              <Text
+                position="absolute"
+                top="2px"
+                left="4px"
+                px="1"
+                py="0.5"
+                bg="gray.700"
+                color="white"
+                fontSize="2xs"
+                fontWeight="semibold"
+                borderRadius="sm"
+                whiteSpace="nowrap"
+                lineHeight="1"
+              >
+                {hoverInfo.label}
+              </Text>
+            </Box>
+          )}
         </Box>
       </Flex>
     </Box>

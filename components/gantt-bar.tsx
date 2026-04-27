@@ -7,6 +7,7 @@ type Props = {
   timelineStart: Date;
   timelineEnd: Date;
   status: string;
+  isOverdue?: boolean;
 };
 
 const TRACK_BG: Record<string, string> = {
@@ -34,7 +35,15 @@ function formatMD(d: Date): string {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
-export function GanttBar({ start, end, progress, timelineStart, timelineEnd, status }: Props) {
+export function GanttBar({
+  start,
+  end,
+  progress,
+  timelineStart,
+  timelineEnd,
+  status,
+  isOverdue = false,
+}: Props) {
   const totalMs = timelineEnd.getTime() - timelineStart.getTime();
   if (totalMs <= 0) return null;
 
@@ -64,6 +73,7 @@ export function GanttBar({ start, end, progress, timelineStart, timelineEnd, sta
       userSelect="none"
       aria-label={`간트 막대 ${dateLabel}`}
       title={dateLabel}
+      {...(isOverdue && { borderWidth: '1px', borderColor: 'red.500' })}
     >
       <Box width={`${fill}%`} height="100%" bg={fillBg} />
     </Box>
