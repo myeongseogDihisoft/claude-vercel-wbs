@@ -6,7 +6,22 @@ type Props = {
   progress: number;
   timelineStart: Date;
   timelineEnd: Date;
+  status: string;
   isOverdue?: boolean;
+};
+
+const TRACK_BG: Record<string, string> = {
+  todo: 'gray.100',
+  doing: 'blue.100',
+  blocked: 'orange.100',
+  done: 'green.100',
+};
+
+const FILL_BG: Record<string, string> = {
+  todo: 'gray.400',
+  doing: 'blue.500',
+  blocked: 'orange.500',
+  done: 'green.500',
 };
 
 function clampPercent(value: number): number {
@@ -16,7 +31,19 @@ function clampPercent(value: number): number {
   return value;
 }
 
-export function GanttBar({ start, end, progress, timelineStart, timelineEnd, isOverdue = false }: Props) {
+function formatMD(d: Date): string {
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+export function GanttBar({
+  start,
+  end,
+  progress,
+  timelineStart,
+  timelineEnd,
+  status,
+  isOverdue = false,
+}: Props) {
   const totalMs = timelineEnd.getTime() - timelineStart.getTime();
   if (totalMs <= 0) return null;
 
@@ -27,6 +54,10 @@ export function GanttBar({ start, end, progress, timelineStart, timelineEnd, isO
   const width = clampPercent(((endMs - startMs) / totalMs) * 100);
   const fill = clampPercent(progress);
 
+  const trackBg = TRACK_BG[status] ?? 'blue.100';
+  const fillBg = FILL_BG[status] ?? 'blue.500';
+  const dateLabel = `${formatMD(start)} ~ ${formatMD(end)} · ${fill}%`;
+
   return (
     <Box
       position="absolute"
@@ -36,14 +67,15 @@ export function GanttBar({ start, end, progress, timelineStart, timelineEnd, isO
       width={`${width}%`}
       minWidth="2px"
       height="1.25rem"
-      bg="blue.100"
+      bg={trackBg}
       borderRadius="sm"
       overflow="hidden"
       userSelect="none"
-      aria-label="간트 막대"
-      {...(isOverdue && { outline: '2px solid', outlineColor: 'red.500' })}
+      aria-label={`간트 막대 ${dateLabel}`}
+      title={dateLabel}
+      {...(isOverdue && { borderWidth: '1px', borderColor: 'red.500' })}
     >
-      <Box width={`${fill}%`} height="100%" bg="blue.500" />
+      <Box width={`${fill}%`} height="100%" bg={fillBg} />
     </Box>
   );
 }
