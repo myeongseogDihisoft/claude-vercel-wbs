@@ -46,15 +46,24 @@ export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props)
       onClick={() => openEdit(task)}
     >
       {overdue && (
-        <Box
-          position="absolute"
-          left={0}
-          top={0}
-          bottom={0}
-          width="3px"
-          bg="red.500"
-          aria-label="지남"
-        />
+        <>
+          <Box
+            position="absolute"
+            left={0}
+            top={0}
+            bottom={0}
+            width="3px"
+            bg="red.500"
+            zIndex={1}
+            aria-label="지남"
+          />
+          <Box
+            position="absolute"
+            inset={0}
+            pointerEvents="none"
+            bgImage="repeating-linear-gradient(45deg, transparent 0, transparent 6px, rgba(239,68,68,0.1) 6px, rgba(239,68,68,0.1) 10px)"
+          />
+        </>
       )}
       <Box width="1.75rem" display="flex" justifyContent="center" flexShrink={0}>
         {hasChildren ? (

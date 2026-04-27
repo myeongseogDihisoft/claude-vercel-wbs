@@ -1,6 +1,10 @@
 import { Box, Flex, Text } from '@chakra-ui/react';
 import type { TaskNode } from '@/lib/tasks/queries';
+import { isOverdue } from '@/lib/tasks/overdue';
 import { GanttBar } from './gantt-bar';
+
+const OVERDUE_STRIPES =
+  'repeating-linear-gradient(45deg, transparent 0, transparent 6px, rgba(239,68,68,0.1) 6px, rgba(239,68,68,0.1) 10px)';
 
 type Props = {
   tasks: TaskNode[];
@@ -98,7 +102,7 @@ export function GanttView({ tasks }: Props) {
       >
         <Box width={LEFT_PANE_WIDTH} flexShrink={0} borderRightWidth="1px" borderColor="gray.200">
           <Flex
-            height={ROW_HEIGHT}
+            height={`calc(${ROW_HEIGHT} * 2)`}
             align="center"
             px={3}
             bg="gray.50"
@@ -134,6 +138,41 @@ export function GanttView({ tasks }: Props) {
             height={ROW_HEIGHT}
             bg="gray.50"
             borderBottomWidth="1px"
+            borderColor="gray.100"
+          >
+            {(() => {
+              const spans: { key: string; label: string; count: number }[] = [];
+              let cur: (typeof spans)[number] | null = null;
+              weekCols.forEach((c) => {
+                const key = `${c.getFullYear()}-${c.getMonth()}`;
+                if (!cur || cur.key !== key) {
+                  cur = { key, label: `${c.getFullYear()}년 ${c.getMonth() + 1}월`, count: 1 };
+                  spans.push(cur);
+                } else {
+                  cur.count++;
+                }
+              });
+              return spans.map((m, i) => (
+                <Flex
+                  key={m.key}
+                  width={`calc(${WEEK_WIDTH} * ${m.count})`}
+                  align="center"
+                  px={2}
+                  borderRightWidth={i === spans.length - 1 ? 0 : '1px'}
+                  borderColor="gray.100"
+                  fontSize="xs"
+                  color="gray.600"
+                  fontWeight="semibold"
+                >
+                  {m.label}
+                </Flex>
+              ));
+            })()}
+          </Flex>
+          <Flex
+            height={ROW_HEIGHT}
+            bg="gray.50"
+            borderBottomWidth="1px"
             borderColor="gray.200"
           >
             {weekCols.map((col, i) => (
@@ -155,6 +194,7 @@ export function GanttView({ tasks }: Props) {
 
           {rows.map(({ node }) => {
             const hasRange = node.startDate && node.dueDate;
+            const overdue = isOverdue(node.dueDate, node.status);
             return (
               <Box
                 key={node.id}
@@ -163,6 +203,26 @@ export function GanttView({ tasks }: Props) {
                 borderBottomWidth="1px"
                 borderColor="gray.100"
               >
+                {overdue && (
+                  <>
+                    <Box
+                      position="absolute"
+                      left={0}
+                      top={0}
+                      bottom={0}
+                      width="3px"
+                      bg="red.500"
+                      zIndex={1}
+                      aria-label="지남"
+                    />
+                    <Box
+                      position="absolute"
+                      inset={0}
+                      pointerEvents="none"
+                      bgImage={OVERDUE_STRIPES}
+                    />
+                  </>
+                )}
                 {weekCols.map((col, i) => (
                   <Box
                     key={col.toISOString()}
