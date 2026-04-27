@@ -1,6 +1,5 @@
 import { Box, Flex, Text } from '@chakra-ui/react';
 import type { TaskNode } from '@/lib/tasks/queries';
-import { isOverdue } from '@/lib/tasks/overdue';
 import { GanttBar } from './gantt-bar';
 
 type Props = {
@@ -87,7 +86,7 @@ export function GanttView({ tasks }: Props) {
   const todayLeft = ((today.getTime() - timelineStart.getTime()) / totalMs) * 100;
 
   const LEFT_PANE_WIDTH = '22rem';
-  const ROW_HEIGHT = '2.25rem';
+  const ROW_HEIGHT = '2rem';
   const WEEK_WIDTH = '6rem';
   const trackWidth = `calc(${WEEK_WIDTH} * ${weekCols.length})`;
 
@@ -105,7 +104,7 @@ export function GanttView({ tasks }: Props) {
             bg="gray.50"
             borderBottomWidth="1px"
             borderColor="gray.200"
-            fontSize="sm"
+            fontSize="xs"
             color="gray.600"
           >
             <Box flex="1">작업</Box>
@@ -184,7 +183,7 @@ export function GanttView({ tasks }: Props) {
                     progress={node.progress}
                     timelineStart={timelineStart}
                     timelineEnd={timelineEnd}
-                    isOverdue={isOverdue(node.dueDate, node.status)}
+                    status={node.status}
                   />
                 ) : (
                   <Flex position="absolute" inset={0} align="center" pl={3}>
@@ -200,8 +199,10 @@ export function GanttView({ tasks }: Props) {
             top={0}
             bottom={0}
             left={`${todayLeft}%`}
-            width="2px"
-            bg="red.400"
+            width="0"
+            borderLeftWidth="1px"
+            borderLeftStyle="dashed"
+            borderLeftColor="gray.400"
             pointerEvents="none"
             aria-label="오늘"
           />

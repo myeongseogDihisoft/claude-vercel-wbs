@@ -3,7 +3,6 @@
 import { Box, Flex, IconButton, Menu, Portal, Progress, Text } from '@chakra-ui/react';
 import type { TaskNode } from '@/lib/tasks/queries';
 import { isOverdue } from '@/lib/tasks/overdue';
-import { OverdueIndicator } from './overdue-indicator';
 import { StatusBadge } from './status-badge';
 import { useTaskActions } from './task-actions-provider';
 
@@ -30,19 +29,33 @@ function formatDateRange(start: string | null, due: string | null): string {
 
 export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props) {
   const { openCreateChild, openEdit, openDelete } = useTaskActions();
+  const overdue = isOverdue(task.dueDate, task.status);
 
   return (
     <Flex
       align="center"
       gap={3}
       px={2}
-      py={2}
+      py={1}
+      h="2rem"
+      position="relative"
       borderBottomWidth="1px"
       borderColor="gray.200"
-      _hover={{ bg: 'gray.50' }}
+      _hover={{ bg: 'gray.100', boxShadow: 'inset 3px 0 0 var(--chakra-colors-blue-500)' }}
       cursor="pointer"
       onClick={() => openEdit(task)}
     >
+      {overdue && (
+        <Box
+          position="absolute"
+          left={0}
+          top={0}
+          bottom={0}
+          width="3px"
+          bg="red.500"
+          aria-label="지남"
+        />
+      )}
       <Box width="1.75rem" display="flex" justifyContent="center" flexShrink={0}>
         {hasChildren ? (
           <IconButton
@@ -77,7 +90,7 @@ export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props)
       </Box>
 
       <Flex width="8rem" flexShrink={0} align="center" gap={2}>
-        <Text fontSize="sm" width="2.75rem" textAlign="right">
+        <Text fontSize="xs" width="2.75rem" textAlign="right" fontVariantNumeric="tabular-nums">
           {task.progress}%
         </Text>
         <Progress.Root value={task.progress} size="xs" flex="1">
@@ -88,20 +101,12 @@ export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props)
       </Flex>
 
       <Box width="9rem" flexShrink={0}>
-        {(() => {
-          const overdue = isOverdue(task.dueDate, task.status);
-          return (
-            <Flex align="center" gap={1} wrap="wrap">
-              <Text
-                fontSize="sm"
-                color={overdue ? 'red.500' : task.startDate || task.dueDate ? undefined : 'gray.500'}
-              >
-                {formatDateRange(task.startDate, task.dueDate)}
-              </Text>
-              {overdue && <OverdueIndicator />}
-            </Flex>
-          );
-        })()}
+        <Text
+          fontSize="sm"
+          color={overdue ? 'red.500' : task.startDate || task.dueDate ? undefined : 'gray.500'}
+        >
+          {formatDateRange(task.startDate, task.dueDate)}
+        </Text>
       </Box>
 
       <Box flexShrink={0}>

@@ -12,7 +12,15 @@ export default async function GanttPage() {
   return (
     <Box as="main" p={8}>
       <Stack gap={6}>
-        <Flex align="center" justify="space-between" wrap="wrap" gap={4}>
+        <Flex
+          align="center"
+          justify="space-between"
+          wrap="wrap"
+          gap={4}
+          pb={4}
+          borderBottomWidth="1px"
+          borderColor="gray.200"
+        >
           <HStack gap={4}>
             <Heading size="lg">WBS</Heading>
             <ViewToggle active="gantt" />
