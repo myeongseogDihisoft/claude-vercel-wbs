@@ -1,7 +1,7 @@
 'use client';
 
-import { Badge, Menu, Portal } from '@chakra-ui/react';
-import { useTransition } from 'react';
+import { Badge } from '@chakra-ui/react';
+import { useTransition, type KeyboardEvent, type MouseEvent } from 'react';
 import { updateTask } from '@/app/actions/tasks';
 
 type StatusKey = 'todo' | 'doing' | 'done';
@@ -28,46 +28,41 @@ type Props = {
 export function StatusBadge({ taskId, status }: Props) {
   const [pending, startTransition] = useTransition();
   const current: StatusKey = (LABEL as Record<string, string>)[status] ? (status as StatusKey) : 'todo';
+  const next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
 
-  const choose = (next: StatusKey) => {
-    if (next === current) return;
+  const advance = () => {
+    if (pending) return;
     startTransition(() => {
       void updateTask(taskId, { status: next });
     });
   };
 
+  const onClick = (e: MouseEvent) => {
+    // 행 클릭(편집 모달)으로 버블링되지 않도록 차단.
+    e.stopPropagation();
+    advance();
+  };
+
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      advance();
+    }
+  };
+
   return (
-    <Menu.Root
-      positioning={{ placement: 'bottom-start' }}
-      onSelect={(d) => choose(d.value as StatusKey)}
+    <Badge
+      role="button"
+      tabIndex={0}
+      colorPalette={PALETTE[current]}
+      cursor="pointer"
+      opacity={pending ? 0.6 : 1}
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+      aria-label={`상태 변경: 다음은 ${LABEL[next]}`}
     >
-      <Menu.Trigger
-        asChild
-        onClick={(e) => {
-          // 행 클릭(편집 모달 오픈)으로 버블링되지 않도록 차단.
-          e.stopPropagation();
-        }}
-      >
-        <Badge
-          colorPalette={PALETTE[current]}
-          cursor="pointer"
-          opacity={pending ? 0.6 : 1}
-          aria-label={`상태 변경: ${LABEL[current]}`}
-        >
-          {LABEL[current]}
-        </Badge>
-      </Menu.Trigger>
-      <Portal>
-        <Menu.Positioner>
-          <Menu.Content onClick={(e) => e.stopPropagation()}>
-            {ORDER.map((s) => (
-              <Menu.Item key={s} value={s}>
-                {LABEL[s]}
-              </Menu.Item>
-            ))}
-          </Menu.Content>
-        </Menu.Positioner>
-      </Portal>
-    </Menu.Root>
+      {LABEL[current]}
+    </Badge>
   );
 }

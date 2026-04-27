@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
-import { Box, Flex, Text } from '@chakra-ui/react';
+import { Box, Flex, IconButton, Text } from '@chakra-ui/react';
 import type { TaskNode } from '@/lib/tasks/queries';
 import { isOverdue } from '@/lib/tasks/overdue';
 import { GanttBar } from './gantt-bar';
@@ -16,15 +16,34 @@ type Props = {
 type FlatRow = {
   node: TaskNode;
   depth: number;
+  hasChildren: boolean;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 
-function flatten(nodes: TaskNode[], depth = 0, acc: FlatRow[] = []): FlatRow[] {
+function flatten(
+  nodes: TaskNode[],
+  expanded: Set<string>,
+  depth = 0,
+  acc: FlatRow[] = [],
+): FlatRow[] {
   for (const node of nodes) {
-    acc.push({ node, depth });
-    if (node.children.length > 0) flatten(node.children, depth + 1, acc);
+    const hasChildren = node.children.length > 0;
+    acc.push({ node, depth, hasChildren });
+    if (hasChildren && expanded.has(node.id)) {
+      flatten(node.children, expanded, depth + 1, acc);
+    }
+  }
+  return acc;
+}
+
+function collectIdsWithChildren(nodes: TaskNode[], acc: Set<string> = new Set()): Set<string> {
+  for (const node of nodes) {
+    if (node.children.length > 0) {
+      acc.add(node.id);
+      collectIdsWithChildren(node.children, acc);
+    }
   }
   return acc;
 }
@@ -85,7 +104,26 @@ function buildWeekColumns(start: Date, end: Date): Date[] {
 }
 
 export function GanttView({ tasks }: Props) {
-  const rows = flatten(tasks);
+  const [expanded, setExpanded] = useState<Set<string>>(() => collectIdsWithChildren(tasks));
+
+  useEffect(() => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      for (const id of collectIdsWithChildren(tasks)) next.add(id);
+      return next;
+    });
+  }, [tasks]);
+
+  const toggle = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const rows = flatten(tasks, expanded);
   const today = startOfDay(new Date());
   const { start: timelineStart, end: timelineEnd } = computeTimeline(rows, today);
   const weekCols = buildWeekColumns(timelineStart, timelineEnd);
@@ -158,8 +196,9 @@ export function GanttView({ tasks }: Props) {
             <Box flex="1">작업</Box>
             <Box width="3rem" textAlign="right">진행률</Box>
           </Flex>
-          {rows.map(({ node, depth }) => {
+          {rows.map(({ node, depth, hasChildren }) => {
             const overdue = isOverdue(node.dueDate, node.status);
+            const isExpanded = expanded.has(node.id);
             return (
               <Flex
                 key={node.id}
@@ -167,6 +206,7 @@ export function GanttView({ tasks }: Props) {
                 height={ROW_HEIGHT}
                 align="center"
                 px={3}
+                gap={4}
                 borderBottomWidth="1px"
                 borderColor="gray.100"
                 cursor={node.startDate ? 'pointer' : 'default'}
@@ -184,7 +224,24 @@ export function GanttView({ tasks }: Props) {
                     aria-label="지남"
                   />
                 )}
-                <Box flex="1" pl={`${depth * 1.25}rem`} minW={0}>
+                {depth > 0 && <Box flexShrink={0} width={`${depth * 1.25}rem`} />}
+                <Box flexShrink={0} display="flex" alignItems="center" justifyContent="center" width="1.5rem">
+                  {hasChildren ? (
+                    <IconButton
+                      aria-label={isExpanded ? '접기' : '펼치기'}
+                      aria-expanded={isExpanded}
+                      size="2xs"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggle(node.id);
+                      }}
+                    >
+                      <Text fontSize="xs">{isExpanded ? '▼' : '▶'}</Text>
+                    </IconButton>
+                  ) : null}
+                </Box>
+                <Box flex="1" minW={0}>
                   <Text truncate fontSize="sm">{node.title}</Text>
                 </Box>
                 <Box width="3rem" textAlign="right">

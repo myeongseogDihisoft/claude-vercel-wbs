@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Flex, IconButton, Menu, Portal, Progress, Text } from '@chakra-ui/react';
+import { Badge, Box, Flex, IconButton, Menu, Portal, Progress, Text } from '@chakra-ui/react';
 import type { TaskNode } from '@/lib/tasks/queries';
 import { isOverdue } from '@/lib/tasks/overdue';
 import { StatusBadge } from './status-badge';
@@ -45,26 +45,6 @@ export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props)
       cursor="pointer"
       onClick={() => openEdit(task)}
     >
-      {overdue && (
-        <>
-          <Box
-            position="absolute"
-            left={0}
-            top={0}
-            bottom={0}
-            width="3px"
-            bg="red.500"
-            zIndex={1}
-            aria-label="지남"
-          />
-          <Box
-            position="absolute"
-            inset={0}
-            pointerEvents="none"
-            bgImage="repeating-linear-gradient(45deg, transparent 0, transparent 6px, rgba(239,68,68,0.1) 6px, rgba(239,68,68,0.1) 10px)"
-          />
-        </>
-      )}
       <Box width="1.75rem" display="flex" justifyContent="center" flexShrink={0}>
         {hasChildren ? (
           <IconButton
@@ -77,7 +57,7 @@ export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props)
               onToggle();
             }}
           >
-            {expanded ? '▼' : '▶'}
+            <Text fontSize="xs">{expanded ? '▼' : '▶'}</Text>
           </IconButton>
         ) : null}
       </Box>
@@ -109,14 +89,19 @@ export function TaskRow({ task, depth, hasChildren, expanded, onToggle }: Props)
         </Progress.Root>
       </Flex>
 
-      <Box width="9rem" flexShrink={0}>
+      <Flex width="9rem" flexShrink={0} align="center" gap={1}>
         <Text
           fontSize="sm"
           color={overdue ? 'red.500' : task.startDate || task.dueDate ? undefined : 'gray.500'}
         >
           {formatDateRange(task.startDate, task.dueDate)}
         </Text>
-      </Box>
+        {overdue && (
+          <Badge colorPalette="red" size="sm" aria-label="지남">
+            지남
+          </Badge>
+        )}
+      </Flex>
 
       <Box flexShrink={0}>
         <Menu.Root
