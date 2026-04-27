@@ -15,6 +15,7 @@ import {
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { createTask, updateTask, type UpdateTaskPatch } from '@/app/actions/tasks';
 import type { Task } from '@/lib/tasks/queries';
+import { useGlobalProgress } from './progress-provider';
 
 export type TaskModalMode =
   | { kind: 'create'; parentId?: string | null; parentTitle?: string | null }
@@ -79,6 +80,7 @@ export function TaskModal({ open, mode, onClose }: Props) {
   const [errors, setErrors] = useState<Errors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const progress = useGlobalProgress();
   // submit() 가 트랜지션을 시작했음을 표시. close 는 transition 외부 effect 에서 수행한다.
   // 같은 transition 안에서 onClose() 를 부르면 Chakra Dialog 의 inert/aria-hidden 정리가
   // RSC 커밋과 경합해 메인 영역이 클릭 불가 상태로 남는 버그가 발생한다 (#43).
@@ -97,9 +99,10 @@ export function TaskModal({ open, mode, onClose }: Props) {
     if (pending) return;
     if (!submittingRef.current) return;
     submittingRef.current = false;
+    progress.end();
     if (submitError) return;
     onClose();
-  }, [pending, submitError, onClose]);
+  }, [pending, submitError, onClose, progress]);
 
   if (!mode) return null;
 
@@ -117,6 +120,7 @@ export function TaskModal({ open, mode, onClose }: Props) {
 
     setSubmitError(null);
     submittingRef.current = true;
+    progress.begin();
     startTransition(async () => {
       try {
         if (mode.kind === 'create') {

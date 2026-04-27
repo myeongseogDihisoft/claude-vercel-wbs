@@ -2,6 +2,7 @@
 
 import { Button, CloseButton, Dialog, Portal, Text } from '@chakra-ui/react';
 import { useEffect, useRef, useState, useTransition } from 'react';
+import { useGlobalProgress } from './progress-provider';
 
 type Props = {
   open: boolean;
@@ -26,10 +27,12 @@ export function ConfirmDialog({
   // close 를 transition 외부에서 수행해 Chakra Dialog cleanup 과 RSC 커밋의 경합을 막는다 (#43).
   const submittingRef = useRef(false);
   const [confirmError, setConfirmError] = useState(false);
+  const progress = useGlobalProgress();
 
   const handleConfirm = () => {
     setConfirmError(false);
     submittingRef.current = true;
+    progress.begin();
     startTransition(async () => {
       try {
         await onConfirm();
@@ -43,9 +46,10 @@ export function ConfirmDialog({
     if (pending) return;
     if (!submittingRef.current) return;
     submittingRef.current = false;
+    progress.end();
     if (confirmError) return;
     onClose();
-  }, [pending, confirmError, onClose]);
+  }, [pending, confirmError, onClose, progress]);
 
   return (
     <Dialog.Root
