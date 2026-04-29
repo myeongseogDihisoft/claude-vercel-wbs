@@ -361,6 +361,46 @@ vercel --prod
 
 ---
 
+## MCP로 호출하기
+
+이 앱은 사람용 웹 UI 외에도 **MCP(Model Context Protocol) 서버**를 같은 도메인에서 노출한다.
+Claude Code·Cursor·MCP Inspector 같은 임의의 AI 에이전트가 Task를 직접 읽고 쓸 수 있다.
+
+### 엔드포인트
+
+- 로컬 dev: `http://localhost:3000/api/mcp`
+- Vercel: `https://<your>.vercel.app/api/mcp`
+
+라우트는 환경변수 `MCP_PUBLIC_ENABLED=1` 일 때만 응답한다 (그 외에는 503).
+Vercel Production 환경에서도 동일하게 환경변수를 등록해야 한다.
+
+### 노출되는 5개 tool
+
+| name | 설명 |
+|---|---|
+| `list_tasks` | 모든 Task를 createdAt 오름차순으로 반환 |
+| `get_task` | `id`로 단건 조회 |
+| `create_task` | 제목 필수. `parent_id` 지정 시 하위 작업 |
+| `update_task` | 부분 갱신. **`progress=100` 이면 `status=done` 자동 동기화** (SPEC.md §3-C2) |
+| `delete_task` | 단건 삭제 (자식은 FK ON DELETE CASCADE) |
+
+### MCP Inspector로 검증
+
+```bash
+# 로컬
+npx -y @modelcontextprotocol/inspector http://localhost:3000/api/mcp
+
+# Vercel 배포본
+npx -y @modelcontextprotocol/inspector https://<your>.vercel.app/api/mcp
+```
+
+### Claude Code 안에서 호출
+
+`.mcp.json` 의 `wbs-local` (또는 본인 Vercel URL을 가리키는 `wbs-prod`) 항목으로 등록하면
+Claude Code 안에서 5개 tool 이 그대로 호출 가능하다.
+
+---
+
 ## 라이선스
 
 교육 과제용 템플릿 — 자유롭게 복제·변경해서 사용하세요.
